@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#123c35">
+<title>Mobile Money Manager</title>
+<style>
+:root{--green:#123c35;--green2:#176b57;--bg:#f3f7f5;--line:#dce6e1;--muted:#64756e;--red:#b42318;--orange:#8a4b08}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#1e302b;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:var(--green);color:#fff;padding:22px 18px 18px}header h1{font-size:22px;margin:0 0 5px}header p{margin:0;color:#d4e8e0;font-size:13px}
+main{max-width:760px;margin:auto;padding:14px 14px 36px}.tabs{display:flex;gap:6px;margin:0 0 14px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:2}
+button,select,input{font:inherit}button{border:0;border-radius:11px;padding:12px 13px;background:var(--green2);color:white;font-weight:650;cursor:pointer}
+.tabs button{flex:1;background:#e1ebe6;color:#24443a;padding:11px 6px;font-size:13px}.tabs button.active{background:var(--green);color:white}
+.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px;margin:0 0 12px;box-shadow:0 2px 8px #102a1b08}
+h2{font-size:18px;margin:0 0 12px}h3{font-size:15px;margin:0 0 10px}.muted{color:var(--muted);font-size:13px;line-height:1.45}
+label{display:block;font-size:12px;font-weight:700;color:#53655e;margin:8px 0 5px}
+input,select{width:100%;border:1px solid #d5e0da;border-radius:9px;padding:12px;background:#fbfdfc;color:#1e302b;min-height:44px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:#f1f6f3;border-radius:11px;padding:12px}.metric small{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:18px;margin-top:5px;overflow-wrap:anywhere}
+.network{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}.network h3{margin-bottom:4px}
+.result{background:#f1f6f3;border-radius:12px;padding:14px;margin-top:12px}.result .big{font-size:22px;font-weight:750}.good{color:#157347}.bad{color:var(--red)}.warn{color:var(--orange)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0}.row span{font-size:13px;color:var(--muted)}.row strong{text-align:right}
+.hidden{display:none!important}.full{width:100%;margin-top:10px}.secondary{background:#e5eee9;color:#24443a}.danger{background:#fff0ef;color:var(--red);border:1px solid #f2ceca}
+.branch-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid #edf1ee}.branch-row:last-child{border:0}
+.pill{font-size:11px;padding:5px 8px;border-radius:20px;background:#e7eee9;color:#39594b;white-space:nowrap}
+footer{font-size:11px;color:var(--muted);text-align:center;padding:14px}
+@media(max-width:420px){.grid{gap:8px}.metric strong{font-size:16px}.tabs button{font-size:12px}}
+</style>
+</head>
+<body>
+<header><h1>Mobile Money Manager</h1><p>Contrôle journalier des caisses · FCFA</p></header>
+<main>
+  <div class="tabs">
+    <button class="active" data-tab="closure">Clôture</button>
+    <button data-tab="wave">Wave global</button>
+    <button data-tab="summary">Synthèse</button>
+  </div>
+  <section id="closure">
+    <div class="card">
+      <h2>Clôture journalière</h2>
+      <div class="grid">
+        <div><label for="date">Date</label><input id="date" type="date"></div>
+        <div><label for="branch">Succursale</label><select id="branch"><option>Succursale 1</option><option>Succursale 2</option><option>Succursale 3</option></select></div>
+      </div>
+      <p class="muted">Saisis les soldes du matin et du soir. Les champs sont enregistrés automatiquement sur cet appareil.</p>
+    </div>
+    <div class="card">
+      <h2>Caisse physique</h2>
+      <div class="grid">
+        <div><label for="cashOpen">Espèces au matin</label><input id="cashOpen" type="number" inputmode="numeric" placeholder="0"></div>
+        <div><label for="cashActual">Espèces comptées le soir</label><input id="cashActual" type="number" inputmode="numeric" placeholder="À saisir"></div>
+      </div>
+    </div>
+    <div id="networkFields"></div>
+    <div class="card">
+      <h2>Wave — récapitulatif de la succursale</h2>
+      <div class="grid">
+        <div><label for="waveDeposits">Total dépôts clients (FCFA)</label><input id="waveDeposits" type="number" inputmode="numeric" placeholder="0"></div>
+        <div><label for="waveWithdrawals">Total retraits clients (FCFA)</label><input id="waveWithdrawals" type="number" inputmode="numeric" placeholder="0"></div>
+      </div>
+      <label for="waveRecharge">Rechargement du compte Wave global par cette succursale (FCFA)</label>
+      <input id="waveRecharge" type="number" inputmode="numeric" placeholder="0">
+      <p class="muted">Les dépôts clients augmentent les espèces de la succursale ; les retraits les diminuent. Un rechargement utilise les espèces de la succursale et augmente le solde électronique Wave global.</p>
+    </div>
+    <div class="card">
+      <h2>Résultat du rapprochement</h2>
+      <div class="grid">
+        <div class="metric"><small>Espèces théoriques le soir</small><strong id="expectedCash">—</strong></div>
+        <div class="metric"><small>Écart de caisse</small><strong id="cashDiff">À compléter</strong></div>
+      </div>
+      <p class="muted" id="resultNote">L'écart est calculé uniquement lorsque les espèces du soir sont saisies.</p>
+      <button class="full" id="saveBtn">Enregistrer la clôture</button>
+      <button class="full" id="closePrepareBtn">Clôturer la journée et préparer demain</button>
+      <button class="full secondary" id="exportBtn">Exporter les données JSON</button>
+      <input id="importFile" type="file" accept="application/json,.json" class="hidden">
+      <button class="full secondary" id="importBtn">Importer une sauvegarde JSON</button>
+      <button class="full danger" id="clearBtn">Effacer les données de cette date et succursale</button>
+    </div>
+  </section>
+  <section id="wave" class="hidden">
+    <div class="card">
+      <h2>Compte Wave commun</h2>
+      <p class="muted">Le solde électronique Wave est saisi une seule fois par date pour les trois succursales.</p>
+      <label for="waveOpen">Solde global du matin (FCFA)</label><input id="waveOpen" type="number" inputmode="numeric" placeholder="Solde initial">
+      <label for="waveActual">Solde global réel du soir (FCFA)</label><input id="waveActual" type="number" inputmode="numeric" placeholder="Solde constaté">
+    </div>
+    <div class="card">
+      <h2>Récapitulatif par succursale</h2>
+      <div id="waveBranchSummary"></div>
+    </div>
+    <div class="card">
+      <h2>Rapprochement Wave global</h2>
+      <div class="grid">
+        <div class="metric"><small>Net dépôts − retraits total</small><strong id="waveNetTotal">—</strong><div class="muted" id="waveRechargeTotal"></div></div>
+        <div class="metric"><small>Solde théorique du soir</small><strong id="waveExpected">—</strong></div>
+      </div>
+      <div class="result"><div class="muted">Écart électronique Wave</div><div class="big" id="waveDiff">À compléter</div></div>
+      <p class="muted">Formule : solde Wave du matin − somme des (dépôts − retraits) + rechargements effectués par les succursales. À ajuster si d'autres mouvements existent.</p>
+      <button class="full" id="saveWaveBtn">Enregistrer les soldes Wave globaux</button>
+    </div>
+  </section>
+  <section id="summary" class="hidden">
+    <div class="card"><h2>Synthèse globale de l'activité</h2><p class="muted">Pour chaque succursale : espèces du soir + soldes électroniques du soir des trois comptes individuels. Le compte Wave global est ajouté une seule fois au total général pour éviter le double comptage.</p><div id="summaryList"></div>
+      <div class="result"><div class="muted">Total des 3 succursales (hors Wave partagé)</div><div class="big" id="branchesTotal">—</div><div class="muted" style="margin-top:10px">Solde électronique Wave global du soir</div><div class="big" id="waveGlobalEvening">—</div><div class="muted" style="margin-top:10px">Valeur totale de l'activité (succursales + Wave global)</div><div class="big" id="activityTotal">—</div></div>
+    </div>
+    <div class="card"><h2>Limites du rapprochement</h2><p class="muted">Sans historique détaillé, l'application calcule des écarts nets, mais ne peut pas identifier l'opération responsable. Les calculs des réseaux individuels supposent que les variations de soldes correspondent aux flux d'espèces, hors commissions, frais, transferts et autres mouvements. Pour Wave, les dépôts et retraits sont saisis séparément et les rechargements diminuent la caisse de la succursale tout en augmentant le compte Wave global. Vérifie les anomalies avant de conclure à une perte.</p></div>
+  </section>
+  <footer>Prototype local de démonstration · Les données restent dans le navigateur de cet appareil. Exportez régulièrement une sauvegarde.</footer>
+</main>
+<script>
+const branches=["Succursale 1","Succursale 2","Succursale 3"];
+const networks=["MOOV Money","Orange Money","MTN Money"];
+const $=id=>document.getElementById(id);
+const today=new Date(); const localDate=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+$("date").value=localDate;
+let activeTab="closure", loading=false;
+const fmt=n=>Math.round(Number(n)||0).toLocaleString("fr-FR")+" FCFA";
+const num=v=>v!==""&&Number.isFinite(Number(v))?Number(v):0;
+const key=(date,branch)=>date+"|"+branch;
+let store={closures:{},wave:{}};
+try{store=JSON.parse(localStorage.getItem("mmm_web_v1"))||store}catch(e){}
+Object.values(store.closures||{}).forEach(c=>{if(c.waveNet!==undefined&&c.waveDeposits===undefined){const old=Number(c.waveNet)||0;c.waveDeposits=String(Math.max(0,old));c.waveWithdrawals=String(Math.max(0,-old));c.waveRecharge=c.waveRecharge||"0";delete c.waveNet;}if(c.waveRecharge===undefined)c.waveRecharge="";});
+function persist(){localStorage.setItem("mmm_web_v1",JSON.stringify(store))}
+function getClosure(){const k=key($("date").value,$("branch").value);return store.closures[k]||{cashOpen:"",cashActual:"",waveDeposits:"",waveWithdrawals:"",waveRecharge:"",networks:Object.fromEntries(networks.map(n=>[n,{open:"",close:""}])),saved:false}}
+function waveNet(c){return num(c.waveDeposits)-num(c.waveWithdrawals)}
+function waveRecharge(c){return num(c.waveRecharge)}
+function setClosure(c){store.closures[key($("date").value,$("branch").value)]=c;persist()}
+function getWave(){return store.wave[$("date").value]||{open:"",actual:"",saved:false}}
+function setWave(w){store.wave[$("date").value]=w;persist()}
+function loadClosure(){
+ loading=true; const c=getClosure();
+ $("cashOpen").value=c.cashOpen??"";$("cashActual").value=c.cashActual??"";$("waveDeposits").value=c.waveDeposits??"";$("waveWithdrawals").value=c.waveWithdrawals??"";$("waveRecharge").value=c.waveRecharge??"";
+ $("networkFields").innerHTML="";
+ networks.forEach(net=>{
+  const d=c.networks?.[net]||{open:"",close:""};
+  const el=document.createElement("div");el.className="card network";
+  el.innerHTML=`<h3>${net}</h3><div class="grid"><div><label>Solde électronique du matin</label><input data-net="${net}" data-field="open" type="number" inputmode="numeric" placeholder="FCFA"></div><div><label>Solde électronique réel du soir</label><input data-net="${net}" data-field="close" type="number" inputmode="numeric" placeholder="FCFA"></div></div>`;
+  el.querySelectorAll("input").forEach(inp=>{inp.value=d[inp.dataset.field]??"";inp.addEventListener("input",()=>{const x=getClosure();x.networks[net][inp.dataset.field]=inp.value;setClosure(x);updateResults()})});
+  $("networkFields").appendChild(el);
+ });
+ loading=false;updateResults();
+ ["cashOpen","cashActual","waveDeposits","waveWithdrawals","waveRecharge"].forEach(id=>$(id).oninput=()=>{const x=getClosure();x[id]=$(id).value;setClosure(x);updateResults();updateWave();updateSummary()});
+}
+function getCalculations(branch){
+ const c=store.closures[key($("date").value,branch)]||{cashOpen:"",cashActual:"",waveDeposits:"",waveWithdrawals:"",waveRecharge:"",networks:{}};
+ let individual=0;networks.forEach(net=>{const d=c.networks?.[net]||{};individual+=num(d.open)-num(d.close)});
+ const expected=num(c.cashOpen)+individual+waveNet(c)-waveRecharge(c);
+ const diff=c.cashActual===""||c.cashActual==null?null:num(c.cashActual)-expected;
+ return {c,expected,diff,individual};
+}
+function updateResults(){
+ const {c,expected,diff}=getCalculations($("branch").value);
+ $("expectedCash").textContent=fmt(expected);
+ $("cashDiff").textContent=diff===null?"À compléter":(diff>0?"+":"")+fmt(diff);
+ $("cashDiff").className=diff===null?"":diff===0?"good":"bad";
+ $("resultNote").textContent=diff===null?"Saisis les espèces réellement comptées le soir pour calculer l'écart.":diff===0?"Aucun écart selon les données saisies.":diff<0?"Déficit à vérifier : écart à expliquer.":"Excédent à vérifier : écart à expliquer.";
+}
+function updateWave(){
+ const w=getWave();$("waveOpen").value=w.open??"";$("waveActual").value=w.actual??"";
+ let net=0;$("waveBranchSummary").innerHTML="";
+ let recharges=0;
+ branches.forEach(b=>{
+  const {c}=getCalculations(b);const branchNet=waveNet(c);net+=branchNet;recharges+=waveRecharge(c);
+  const row=document.createElement("div");row.className="branch-row";
+  row.innerHTML=`<div><strong>${b}</strong><div class="muted">Dépôts ${fmt(num(c.waveDeposits))} · Retraits ${fmt(num(c.waveWithdrawals))} · Rechargement ${fmt(waveRecharge(c))}</div></div><strong>${branchNet>=0?"+":""}${fmt(branchNet)}</strong>`;$("waveBranchSummary").appendChild(row);
+ });
+ const expected=num(w.open)-net+recharges; const diff=w.actual===""||w.actual==null?null:num(w.actual)-expected;
+ $("waveNetTotal").textContent=fmt(net);
+ $("waveRechargeTotal").textContent="Rechargements cumulés : "+fmt(recharges);
+ $("waveExpected").textContent=fmt(expected);
+ $("waveDiff").textContent=diff===null?"À compléter":(diff>0?"+":"")+fmt(diff);
+ $("waveDiff").className="big "+(diff===null?"":diff===0?"good":"bad");
+}
+function updateSummary(){
+ $("summaryList").innerHTML="";
+ branches.forEach(b=>{
+  const {c,expected,diff}=getCalculations(b);
+  const row=document.createElement("div");row.className="branch-row";
+  const state=!c.saved?"Non enregistrée":diff===null?"Espèces soir manquantes":diff===0?"Équilibrée":diff<0?"Déficit à vérifier":"Excédent à vérifier";
+  const cls=!c.saved||diff===null?"pill":diff===0?"pill good":"pill bad";
+  let electronic=0;networks.forEach(net=>{const d=c.networks?.[net]||{};electronic+=num(d.close)});
+  const branchTotal=(c.cashActual!==""&&c.cashActual!=null?num(c.cashActual):0)+electronic;
+  row.innerHTML=`<div><strong>${b}</strong><div class="muted">Espèces soir : ${c.cashActual===""||c.cashActual==null?"non saisies":fmt(num(c.cashActual))} · Comptes électroniques : ${fmt(electronic)} · Sous-total : ${fmt(branchTotal)}${diff===null?"":" · Écart de caisse : "+fmt(diff)}</div></div><span class="${cls}">${state}</span>`;
+  $("summaryList").appendChild(row);
+ });
+ let branchesTotal=0;
+ branches.forEach(b=>{const c=(store.closures[key($("date").value,b)]||{});let electronic=0;networks.forEach(net=>{electronic+=num(c.networks?.[net]?.close)});branchesTotal+=(c.cashActual!==""&&c.cashActual!=null?num(c.cashActual):0)+electronic;});
+ const w=getWave();const waveGlobal=(w.actual!==""&&w.actual!=null)?num(w.actual):0;
+ $("branchesTotal").textContent=fmt(branchesTotal);
+ $("waveGlobalEvening").textContent=(w.actual!==""&&w.actual!=null)?fmt(waveGlobal):"Solde réel du soir non saisi";
+ $("activityTotal").textContent=fmt(branchesTotal+waveGlobal);
+}
+function refresh(){updateResults();updateWave();updateSummary()}
+$("date").addEventListener("change",()=>{loadClosure();updateWave();updateSummary()});
+$("branch").addEventListener("change",loadClosure);
+$("waveOpen").addEventListener("input",()=>{const w=getWave();w.open=$("waveOpen").value;setWave(w);updateWave()});
+$("waveActual").addEventListener("input",()=>{const w=getWave();w.actual=$("waveActual").value;setWave(w);updateWave()});
+function saveCurrentClosure(){const c=getClosure();c.cashOpen=$("cashOpen").value;c.cashActual=$("cashActual").value;c.waveDeposits=$("waveDeposits").value;c.waveWithdrawals=$("waveWithdrawals").value;c.waveRecharge=$("waveRecharge").value;c.saved=true;setClosure(c);return c}
+$("saveBtn").addEventListener("click",()=>{saveCurrentClosure();refresh();alert("Clôture enregistrée sur cet appareil.")});
+$("closePrepareBtn").addEventListener("click",()=>{
+ const currentDate=$("date").value, branch=$("branch").value;
+ const c=saveCurrentClosure();
+ const missing=[];
+ if(c.cashActual===""||c.cashActual==null)missing.push("les espèces du soir");
+ networks.forEach(net=>{if(c.networks?.[net]?.close===""||c.networks?.[net]?.close==null)missing.push("le solde du soir de "+net)});
+ if(missing.length){alert("Pour préparer demain, renseigne d'abord : "+missing.join(", ")+".");refresh();return;}
+ const nextDate=addDays(currentDate,1), nextKey=key(nextDate,branch);
+ let branchCarried=false;
+ if(!store.closures[nextKey]){
+  branchCarried=true;
+  store.closures[nextKey]={cashOpen:String(c.cashActual),cashActual:"",waveDeposits:"",waveWithdrawals:"",waveRecharge:"",networks:{},saved:false};
+  networks.forEach(net=>store.closures[nextKey].networks[net]={open:String(c.networks[net].close),close:""});
+ }
+ let waveCarried=false;
+ const w=getWave();
+ if(w.actual!==""&&w.actual!=null){
+  if(!store.wave[nextDate]){store.wave[nextDate]={open:String(w.actual),actual:"",saved:false};waveCarried=true;}
+ }
+ persist();$("date").value=nextDate;loadClosure();updateWave();updateSummary();
+ let message="Clôture enregistrée. "+(branchCarried?"Les espèces et soldes MOOV, Orange et MTN du soir ont été reportés dans les soldes d'ouverture du lendemain.":"Les données de la succursale pour demain existaient déjà ; elles ont été conservées sans écrasement.");
+ if(!waveCarried){message+=" Le solde d'ouverture Wave global n'a pas été créé automatiquement : vérifie que le solde réel Wave du soir est saisi et que la date de demain n'a pas déjà une ouverture.";}else{message+=" Le solde Wave global du soir a aussi été reporté comme solde d'ouverture de demain.";}
+ alert(message);
+});
+$("saveWaveBtn").addEventListener("click",()=>{const w=getWave();w.open=$("waveOpen").value;w.actual=$("waveActual").value;w.saved=true;setWave(w);refresh();alert("Soldes globaux Wave enregistrés sur cet appareil.")});
+$("exportBtn").addEventListener("click",()=>{const blob=new Blob([JSON.stringify(store,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="mobile-money-manager-sauvegarde.json";a.click();URL.revokeObjectURL(a.href)});
+$("importBtn").addEventListener("click",()=>$("importFile").click());
+$("importFile").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;try{const imported=JSON.parse(await f.text());if(!imported.closures||!imported.wave)throw Error("format");store=imported;persist();loadClosure();updateWave();updateSummary();alert("Sauvegarde importée.")}catch(err){alert("Fichier de sauvegarde invalide.")}e.target.value=""});
+$("clearBtn").addEventListener("click",()=>{if(confirm("Effacer les données de cette date et de cette succursale sur cet appareil ?")){delete store.closures[key($("date").value,$("branch").value)];persist();loadClosure();refresh()}});
+document.querySelectorAll("[data-tab]").forEach(btn=>btn.addEventListener("click",()=>{activeTab=btn.dataset.tab;document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active",b===btn));["closure","wave","summary"].forEach(id=>$(id).classList.toggle("hidden",id!==activeTab));if(activeTab==="wave")updateWave();if(activeTab==="summary")updateSummary()}));
+loadClosure();updateWave();updateSummary();
+</script>
+</body>
+</html>
